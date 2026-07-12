@@ -1,0 +1,36 @@
+## .NET
+bin/
+obj/
+TestResults/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build output
+artifacts/
+publish/
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Docker / local environment
+.env
+.env.*
+docker-compose.override.yml
+src/**/appsettings.Development.json
+!src/**/appsettings.Development.example.json
+
+## Logs
+*.log
+logs/

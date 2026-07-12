@@ -1,0 +1,67 @@
+using Nexus.Erp.Api.Middleware;
+using Nexus.Erp.Modules.HR.Application;
+using Nexus.Erp.Modules.HR.Infrastructure;
+using Nexus.Erp.Modules.HR.Presentation.Employees;
+using Nexus.Erp.Modules.Identity.Application;
+using Nexus.Erp.Modules.Identity.Infrastructure;
+using Nexus.Erp.Modules.Identity.Presentation.Auth;
+using Nexus.Erp.Modules.Inventory.Application;
+using Nexus.Erp.Modules.Inventory.Infrastructure;
+using Nexus.Erp.Modules.Inventory.Presentation.Products;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services
+    .AddIdentityApplication()
+    .AddHrApplication()
+    .AddInventoryApplication();
+
+builder.Services
+    .AddIdentityInfrastructure(builder.Configuration)
+    .AddHrInfrastructure(builder.Configuration)
+    .AddInventoryInfrastructure(builder.Configuration);
+
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanReadHr", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("permission", "hr.read");
+    });
+
+    options.AddPolicy("CanReadInventory", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("permission", "inventory.read");
+    });
+});
+
+var app = builder.Build();
+
+app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapHealthChecks("/health");
+app.MapIdentityEndpoints();
+app.MapHrEndpoints();
+app.MapInventoryEndpoints();
+
+app.Run();
+
+public partial class Program;
