@@ -10,6 +10,7 @@ public static class PermissionConstants
     public static readonly string[] DefaultUserPermissions =
     [
         HrRead,
-        InventoryRead
+        InventoryRead,
+        InventoryWrite
     ];
 }

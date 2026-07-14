@@ -68,6 +68,12 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser();
         policy.RequireClaim("permission", "inventory.read");
     });
+
+    options.AddPolicy("CanWriteInventory", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("permission", "inventory.write");
+    });
 });
 
 var app = builder.Build();

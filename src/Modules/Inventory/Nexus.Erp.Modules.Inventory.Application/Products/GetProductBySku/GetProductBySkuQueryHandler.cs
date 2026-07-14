@@ -19,6 +19,13 @@ internal sealed class GetProductBySkuQueryHandler(IProductReadRepository product
         }
 
         return Result<ProductResponse>.Success(
-            new ProductResponse(product.Id, product.Sku, product.Name, product.UnitPrice));
+            new ProductResponse(
+                product.Id,
+                product.Sku,
+                product.Name,
+                product.UnitPrice,
+                product.QuantityOnHand,
+                product.ReorderLevel,
+                product.IsBelowReorderLevel));
     }
 }

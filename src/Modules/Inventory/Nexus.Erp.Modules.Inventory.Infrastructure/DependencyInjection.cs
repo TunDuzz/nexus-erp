@@ -25,6 +25,7 @@ public static class DependencyInjection
                 mySql => mySql.MigrationsHistoryTable("__EFMigrationsHistory")));
 
         services.AddScoped<IProductReadRepository, ProductReadRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
 
         return services;
     }

@@ -77,6 +77,46 @@ Use the returned `accessToken` as:
 Authorization: Bearer <accessToken>
 ```
 
+## Inventory
+
+Inventory endpoints require JWT permissions:
+
+- `inventory.read`: read product data.
+- `inventory.write`: create/update products and adjust stock.
+
+Endpoints:
+
+```text
+GET  /api/inventory/products
+GET  /api/inventory/products/{sku}
+POST /api/inventory/products
+PUT  /api/inventory/products/{sku}
+POST /api/inventory/products/{sku}/stock-adjustments
+```
+
+Create product request:
+
+```json
+{
+  "sku": "SKU-001",
+  "name": "Wireless Mouse",
+  "unitPrice": 199000,
+  "initialQuantity": 25,
+  "reorderLevel": 5
+}
+```
+
+Adjust stock request:
+
+```json
+{
+  "quantityChange": -2,
+  "reason": "Sales order allocation"
+}
+```
+
+Use positive `quantityChange` for stock increases and negative values for stock decreases.
+
 ## Docker
 
 `docker-compose.yml` includes a MySQL 8.4 service and creates the three module databases from:

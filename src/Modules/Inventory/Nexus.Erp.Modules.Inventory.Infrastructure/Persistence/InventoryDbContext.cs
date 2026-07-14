@@ -17,6 +17,8 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             builder.Property(product => product.Sku).HasMaxLength(64).IsRequired();
             builder.Property(product => product.Name).HasMaxLength(200).IsRequired();
             builder.Property(product => product.UnitPrice).HasColumnType("decimal(18,2)");
+            builder.Property(product => product.QuantityOnHand).IsRequired();
+            builder.Property(product => product.ReorderLevel).IsRequired();
             builder.HasIndex(product => product.Sku).IsUnique();
         });
     }
