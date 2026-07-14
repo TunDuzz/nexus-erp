@@ -16,7 +16,7 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("NexusErpInventory")
             ?? throw new InvalidOperationException("Connection string 'NexusErpInventory' was not found.");
-        var serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
 
         services.AddDbContext<InventoryDbContext>(options =>
             options.UseMySql(

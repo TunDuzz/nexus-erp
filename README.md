@@ -39,6 +39,44 @@ CREATE DATABASE IF NOT EXISTS nexus_erp_hr CHARACTER SET utf8mb4 COLLATE utf8mb4
 CREATE DATABASE IF NOT EXISTS nexus_erp_inventory CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
+Apply module migrations:
+
+```bash
+dotnet tool restore
+dotnet tool run dotnet-ef database update --context NexusIdentityDbContext --project src/Modules/Identity/Nexus.Erp.Modules.Identity.Infrastructure/Nexus.Erp.Modules.Identity.Infrastructure.csproj --startup-project src/Modules/Identity/Nexus.Erp.Modules.Identity.Infrastructure/Nexus.Erp.Modules.Identity.Infrastructure.csproj
+dotnet tool run dotnet-ef database update --context HrDbContext --project src/Modules/HR/Nexus.Erp.Modules.HR.Infrastructure/Nexus.Erp.Modules.HR.Infrastructure.csproj --startup-project src/Modules/HR/Nexus.Erp.Modules.HR.Infrastructure/Nexus.Erp.Modules.HR.Infrastructure.csproj
+dotnet tool run dotnet-ef database update --context InventoryDbContext --project src/Modules/Inventory/Nexus.Erp.Modules.Inventory.Infrastructure/Nexus.Erp.Modules.Inventory.Infrastructure.csproj --startup-project src/Modules/Inventory/Nexus.Erp.Modules.Inventory.Infrastructure/Nexus.Erp.Modules.Inventory.Infrastructure.csproj
+```
+
+## Auth
+
+JWT configuration lives under the `Jwt` section. Keep real local secrets in `appsettings.Development.json`, which is ignored by Git.
+
+Endpoints:
+
+```text
+POST /api/identity/register
+POST /api/identity/login
+GET  /api/identity/me
+```
+
+Register request:
+
+```json
+{
+  "email": "admin@nexus.local",
+  "password": "Password123",
+  "firstName": "Nexus",
+  "lastName": "Admin"
+}
+```
+
+Use the returned `accessToken` as:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
 ## Docker
 
 `docker-compose.yml` includes a MySQL 8.4 service and creates the three module databases from:

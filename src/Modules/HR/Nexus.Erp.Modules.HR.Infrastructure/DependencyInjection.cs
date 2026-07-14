@@ -16,7 +16,7 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("NexusErpHr")
             ?? throw new InvalidOperationException("Connection string 'NexusErpHr' was not found.");
-        var serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
 
         services.AddDbContext<HrDbContext>(options =>
             options.UseMySql(

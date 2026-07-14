@@ -1,3 +1,4 @@
+using Microsoft.OpenApi.Models;
 using Nexus.Erp.Api.Middleware;
 using Nexus.Erp.Modules.HR.Application;
 using Nexus.Erp.Modules.HR.Infrastructure;
@@ -16,7 +17,33 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste JWT access token here."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            []
+        }
+    });
+});
 
 builder.Services
     .AddIdentityApplication()
@@ -28,7 +55,6 @@ builder.Services
     .AddHrInfrastructure(builder.Configuration)
     .AddInventoryInfrastructure(builder.Configuration);
 
-builder.Services.AddAuthentication();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CanReadHr", policy =>
