@@ -11,6 +11,7 @@ internal static class ProductMapper
             product.Id,
             product.Sku,
             product.Name,
+            product.UnitOfMeasure,
             product.UnitPrice,
             product.QuantityOnHand,
             product.ReorderLevel,

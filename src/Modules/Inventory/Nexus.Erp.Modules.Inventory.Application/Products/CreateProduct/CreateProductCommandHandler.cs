@@ -22,6 +22,7 @@ internal sealed class CreateProductCommandHandler(IProductRepository products)
             Guid.NewGuid(),
             request.Sku,
             request.Name,
+            request.UnitOfMeasure,
             request.UnitPrice,
             request.InitialQuantity,
             request.ReorderLevel);

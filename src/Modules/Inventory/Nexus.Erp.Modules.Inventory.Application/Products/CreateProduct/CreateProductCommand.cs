@@ -6,6 +6,7 @@ namespace Nexus.Erp.Modules.Inventory.Application.Products.CreateProduct;
 public sealed record CreateProductCommand(
     string Sku,
     string Name,
+    string UnitOfMeasure,
     decimal UnitPrice,
     int InitialQuantity,
     int ReorderLevel) : ICommand<ProductResponse>;

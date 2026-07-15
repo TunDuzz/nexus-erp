@@ -19,7 +19,7 @@ internal sealed class UpdateProductCommandHandler(IProductRepository products)
             return Result<ProductResponse>.Failure(new Error("Inventory.ProductNotFound", "Product was not found."));
         }
 
-        product.UpdateDetails(request.Name, request.UnitPrice, request.ReorderLevel);
+        product.UpdateDetails(request.Name, request.UnitOfMeasure, request.UnitPrice, request.ReorderLevel);
         await products.SaveChangesAsync(cancellationToken);
 
         return Result<ProductResponse>.Success(ProductMapper.ToResponse(product));

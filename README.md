@@ -92,6 +92,12 @@ GET  /api/inventory/products/{sku}
 POST /api/inventory/products
 PUT  /api/inventory/products/{sku}
 POST /api/inventory/products/{sku}/stock-adjustments
+GET  /api/inventory/stock-receipts
+GET  /api/inventory/stock-receipts/{receiptId}
+POST /api/inventory/stock-receipts
+GET  /api/inventory/stock-issues
+GET  /api/inventory/stock-issues/{issueId}
+POST /api/inventory/stock-issues
 ```
 
 Create product request:
@@ -99,23 +105,51 @@ Create product request:
 ```json
 {
   "sku": "SKU-001",
-  "name": "Wireless Mouse",
+  "name": "Steel Sheet 2mm",
+  "unitOfMeasure": "sheet",
   "unitPrice": 199000,
-  "initialQuantity": 25,
+  "initialQuantity": 0,
   "reorderLevel": 5
 }
 ```
 
-Adjust stock request:
+Create stock receipt request:
 
 ```json
 {
-  "quantityChange": -2,
-  "reason": "Sales order allocation"
+  "receiptNumber": "PN-2026-0001",
+  "supplierName": "Acme Materials",
+  "receivedAtUtc": null,
+  "note": "Initial material purchase",
+  "lines": [
+    {
+      "sku": "SKU-001",
+      "quantity": 25,
+      "unitCost": 180000
+    }
+  ]
 }
 ```
 
-Use positive `quantityChange` for stock increases and negative values for stock decreases.
+Create stock issue request:
+
+```json
+{
+  "issueNumber": "PX-2026-0001",
+  "requestedBy": "Production Team",
+  "issuedAtUtc": null,
+  "note": "Material issued for production",
+  "lines": [
+    {
+      "sku": "SKU-001",
+      "quantity": 2,
+      "reason": "Work order WO-001"
+    }
+  ]
+}
+```
+
+Stock receipts increase `QuantityOnHand`; stock issues decrease it and fail when stock would become negative.
 
 ## Docker
 

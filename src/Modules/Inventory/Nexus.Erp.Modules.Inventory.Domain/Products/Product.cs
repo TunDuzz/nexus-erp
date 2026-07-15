@@ -9,7 +9,14 @@ public sealed class Product : Entity<Guid>
     {
     }
 
-    public Product(Guid id, string sku, string name, decimal unitPrice, int initialQuantity, int reorderLevel)
+    public Product(
+        Guid id,
+        string sku,
+        string name,
+        string unitOfMeasure,
+        decimal unitPrice,
+        int initialQuantity,
+        int reorderLevel)
         : base(id)
     {
         if (string.IsNullOrWhiteSpace(sku))
@@ -20,6 +27,11 @@ public sealed class Product : Entity<Guid>
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new DomainException(new Error("Inventory.ProductNameRequired", "Product name is required."));
+        }
+
+        if (string.IsNullOrWhiteSpace(unitOfMeasure))
+        {
+            throw new DomainException(new Error("Inventory.ProductUnitRequired", "Product unit of measure is required."));
         }
 
         if (unitPrice < 0)
@@ -39,6 +51,7 @@ public sealed class Product : Entity<Guid>
 
         Sku = sku.Trim();
         Name = name.Trim();
+        UnitOfMeasure = unitOfMeasure.Trim();
         UnitPrice = unitPrice;
         QuantityOnHand = initialQuantity;
         ReorderLevel = reorderLevel;
@@ -48,6 +61,8 @@ public sealed class Product : Entity<Guid>
 
     public string Name { get; private set; } = string.Empty;
 
+    public string UnitOfMeasure { get; private set; } = string.Empty;
+
     public decimal UnitPrice { get; private set; }
 
     public int QuantityOnHand { get; private set; }
@@ -56,11 +71,16 @@ public sealed class Product : Entity<Guid>
 
     public bool IsBelowReorderLevel => QuantityOnHand <= ReorderLevel;
 
-    public void UpdateDetails(string name, decimal unitPrice, int reorderLevel)
+    public void UpdateDetails(string name, string unitOfMeasure, decimal unitPrice, int reorderLevel)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new DomainException(new Error("Inventory.ProductNameRequired", "Product name is required."));
+        }
+
+        if (string.IsNullOrWhiteSpace(unitOfMeasure))
+        {
+            throw new DomainException(new Error("Inventory.ProductUnitRequired", "Product unit of measure is required."));
         }
 
         if (unitPrice < 0)
@@ -74,6 +94,7 @@ public sealed class Product : Entity<Guid>
         }
 
         Name = name.Trim();
+        UnitOfMeasure = unitOfMeasure.Trim();
         UnitPrice = unitPrice;
         ReorderLevel = reorderLevel;
     }
