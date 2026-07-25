@@ -12,10 +12,41 @@ using Nexus.Erp.Modules.Inventory.Presentation.Products;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string CorsPolicyName = "Frontend";
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        var allowedOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>()
+            ?? [];
 
+        if (allowedOrigins.Length == 0)
+        {
+            allowedOrigins =
+            [
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:5173",
+                "http://localhost:8080",
+                "https://localhost:3000",
+                "https://localhost:4200",
+                "https://localhost:5173",
+                "https://localhost:8080"
+            ];
+        }
+
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -86,6 +117,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(CorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -97,3 +129,4 @@ app.MapInventoryEndpoints();
 app.Run();
 
 public partial class Program;
+

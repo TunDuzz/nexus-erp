@@ -1,4 +1,4 @@
-using Nexus.Erp.SharedKernel.Domain;
+﻿using Nexus.Erp.SharedKernel.Domain;
 using Nexus.Erp.SharedKernel.Errors;
 
 namespace Nexus.Erp.Modules.Inventory.Domain.Products;
@@ -16,7 +16,9 @@ public sealed class Product : Entity<Guid>
         string unitOfMeasure,
         decimal unitPrice,
         int initialQuantity,
-        int reorderLevel)
+        int reorderLevel,
+        DateOnly? manufacturingDate,
+        DateOnly? expirationDate)
         : base(id)
     {
         if (string.IsNullOrWhiteSpace(sku))
@@ -24,37 +26,14 @@ public sealed class Product : Entity<Guid>
             throw new DomainException(new Error("Inventory.ProductSkuRequired", "Product SKU is required."));
         }
 
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            throw new DomainException(new Error("Inventory.ProductNameRequired", "Product name is required."));
-        }
-
-        if (string.IsNullOrWhiteSpace(unitOfMeasure))
-        {
-            throw new DomainException(new Error("Inventory.ProductUnitRequired", "Product unit of measure is required."));
-        }
-
-        if (unitPrice < 0)
-        {
-            throw new DomainException(new Error("Inventory.ProductPriceInvalid", "Unit price cannot be negative."));
-        }
-
         if (initialQuantity < 0)
         {
             throw new DomainException(new Error("Inventory.ProductQuantityInvalid", "Initial quantity cannot be negative."));
         }
 
-        if (reorderLevel < 0)
-        {
-            throw new DomainException(new Error("Inventory.ProductReorderLevelInvalid", "Reorder level cannot be negative."));
-        }
-
         Sku = sku.Trim();
-        Name = name.Trim();
-        UnitOfMeasure = unitOfMeasure.Trim();
-        UnitPrice = unitPrice;
         QuantityOnHand = initialQuantity;
-        ReorderLevel = reorderLevel;
+        UpdateDetails(name, unitOfMeasure, unitPrice, reorderLevel, manufacturingDate, expirationDate);
     }
 
     public string Sku { get; private set; } = string.Empty;
@@ -69,9 +48,26 @@ public sealed class Product : Entity<Guid>
 
     public int ReorderLevel { get; private set; }
 
+    public DateOnly? ManufacturingDate { get; private set; }
+
+    public DateOnly? ExpirationDate { get; private set; }
+
     public bool IsBelowReorderLevel => QuantityOnHand <= ReorderLevel;
 
-    public void UpdateDetails(string name, string unitOfMeasure, decimal unitPrice, int reorderLevel)
+    public bool IsExpired(DateOnly today) => ExpirationDate is not null && ExpirationDate.Value < today;
+
+    public bool IsExpiringSoon(DateOnly today, int warningDays = 14) =>
+        ExpirationDate is not null &&
+        ExpirationDate.Value >= today &&
+        ExpirationDate.Value <= today.AddDays(warningDays);
+
+    public void UpdateDetails(
+        string name,
+        string unitOfMeasure,
+        decimal unitPrice,
+        int reorderLevel,
+        DateOnly? manufacturingDate,
+        DateOnly? expirationDate)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -93,10 +89,17 @@ public sealed class Product : Entity<Guid>
             throw new DomainException(new Error("Inventory.ProductReorderLevelInvalid", "Reorder level cannot be negative."));
         }
 
+        if (manufacturingDate is not null && expirationDate is not null && expirationDate < manufacturingDate)
+        {
+            throw new DomainException(new Error("Inventory.ProductExpirationDateInvalid", "Expiration date cannot be before manufacturing date."));
+        }
+
         Name = name.Trim();
         UnitOfMeasure = unitOfMeasure.Trim();
         UnitPrice = unitPrice;
         ReorderLevel = reorderLevel;
+        ManufacturingDate = manufacturingDate;
+        ExpirationDate = expirationDate;
     }
 
     public void AdjustStock(int quantityChange)

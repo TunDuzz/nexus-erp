@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nexus.Erp.Modules.Inventory.Application.Abstractions.Data;
 using Nexus.Erp.Modules.Inventory.Domain.StockIssues;
 using Nexus.Erp.Modules.Inventory.Infrastructure.Persistence;
@@ -17,10 +17,23 @@ internal sealed class StockIssueRepository(InventoryDbContext dbContext) : IStoc
         return dbContext.StockIssues.AnyAsync(issue => issue.IssueNumber == issueNumber, cancellationToken);
     }
 
+    public Task<bool> ContainsSkuAsync(string sku, CancellationToken cancellationToken = default)
+    {
+        return dbContext.StockIssues
+            .AnyAsync(issue => issue.Lines.Any(line => line.Sku == sku), cancellationToken);
+    }
+
     public Task<StockIssue?> GetByIdAsync(Guid issueId, CancellationToken cancellationToken = default)
     {
         return dbContext.StockIssues
             .AsNoTracking()
+            .Include(issue => issue.Lines)
+            .FirstOrDefaultAsync(issue => issue.Id == issueId, cancellationToken);
+    }
+
+    public Task<StockIssue?> GetByIdForUpdateAsync(Guid issueId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.StockIssues
             .Include(issue => issue.Lines)
             .FirstOrDefaultAsync(issue => issue.Id == issueId, cancellationToken);
     }
@@ -33,4 +46,15 @@ internal sealed class StockIssueRepository(InventoryDbContext dbContext) : IStoc
             .OrderByDescending(issue => issue.IssuedAtUtc)
             .ToArrayAsync(cancellationToken);
     }
+
+    public void AddLines(IEnumerable<StockIssueLine> lines)
+    {
+        dbContext.Set<StockIssueLine>().AddRange(lines);
+    }
+
+    public void Remove(StockIssue issue)
+    {
+        dbContext.StockIssues.Remove(issue);
+    }
 }
+

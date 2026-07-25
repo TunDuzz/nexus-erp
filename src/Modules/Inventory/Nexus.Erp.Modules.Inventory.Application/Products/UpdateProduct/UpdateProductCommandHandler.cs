@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using Nexus.Erp.Modules.Inventory.Application.Abstractions.Data;
 using Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
 using Nexus.Erp.SharedKernel.Errors;
@@ -19,9 +19,10 @@ internal sealed class UpdateProductCommandHandler(IProductRepository products)
             return Result<ProductResponse>.Failure(new Error("Inventory.ProductNotFound", "Product was not found."));
         }
 
-        product.UpdateDetails(request.Name, request.UnitOfMeasure, request.UnitPrice, request.ReorderLevel);
+        product.UpdateDetails(request.Name, request.UnitOfMeasure, request.UnitPrice, request.ReorderLevel, request.ManufacturingDate, request.ExpirationDate);
         await products.SaveChangesAsync(cancellationToken);
 
         return Result<ProductResponse>.Success(ProductMapper.ToResponse(product));
     }
 }
+

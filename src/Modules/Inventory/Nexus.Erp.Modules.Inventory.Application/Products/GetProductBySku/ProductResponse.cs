@@ -1,4 +1,4 @@
-namespace Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
+﻿namespace Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
 
 public sealed record ProductResponse(
     Guid Id,
@@ -8,4 +8,6 @@ public sealed record ProductResponse(
     decimal UnitPrice,
     int QuantityOnHand,
     int ReorderLevel,
+    DateOnly? ManufacturingDate,
+    DateOnly? ExpirationDate,
     bool IsBelowReorderLevel);

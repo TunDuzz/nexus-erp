@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nexus.Erp.Modules.Inventory.Application.Abstractions.Data;
 using Nexus.Erp.Modules.Inventory.Domain.Products;
 using Nexus.Erp.Modules.Inventory.Infrastructure.Persistence;
@@ -21,6 +21,11 @@ internal sealed class ProductRepository(InventoryDbContext dbContext) : IProduct
     public Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
         return dbContext.Products.AnyAsync(product => product.Sku == sku, cancellationToken);
+    }
+
+    public void Remove(Product product)
+    {
+        dbContext.Products.Remove(product);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)

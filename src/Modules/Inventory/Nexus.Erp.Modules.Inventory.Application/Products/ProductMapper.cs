@@ -1,4 +1,4 @@
-using Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
+﻿using Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
 using Nexus.Erp.Modules.Inventory.Domain.Products;
 
 namespace Nexus.Erp.Modules.Inventory.Application.Products;
@@ -15,6 +15,9 @@ internal static class ProductMapper
             product.UnitPrice,
             product.QuantityOnHand,
             product.ReorderLevel,
+            product.ManufacturingDate,
+            product.ExpirationDate,
             product.IsBelowReorderLevel);
     }
 }
+

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nexus.Erp.Modules.Inventory.Application.Abstractions.Data;
 using Nexus.Erp.Modules.Inventory.Domain.StockReceipts;
 using Nexus.Erp.Modules.Inventory.Infrastructure.Persistence;
@@ -17,10 +17,23 @@ internal sealed class StockReceiptRepository(InventoryDbContext dbContext) : ISt
         return dbContext.StockReceipts.AnyAsync(receipt => receipt.ReceiptNumber == receiptNumber, cancellationToken);
     }
 
+    public Task<bool> ContainsSkuAsync(string sku, CancellationToken cancellationToken = default)
+    {
+        return dbContext.StockReceipts
+            .AnyAsync(receipt => receipt.Lines.Any(line => line.Sku == sku), cancellationToken);
+    }
+
     public Task<StockReceipt?> GetByIdAsync(Guid receiptId, CancellationToken cancellationToken = default)
     {
         return dbContext.StockReceipts
             .AsNoTracking()
+            .Include(receipt => receipt.Lines)
+            .FirstOrDefaultAsync(receipt => receipt.Id == receiptId, cancellationToken);
+    }
+
+    public Task<StockReceipt?> GetByIdForUpdateAsync(Guid receiptId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.StockReceipts
             .Include(receipt => receipt.Lines)
             .FirstOrDefaultAsync(receipt => receipt.Id == receiptId, cancellationToken);
     }
@@ -33,4 +46,15 @@ internal sealed class StockReceiptRepository(InventoryDbContext dbContext) : ISt
             .OrderByDescending(receipt => receipt.ReceivedAtUtc)
             .ToArrayAsync(cancellationToken);
     }
+
+    public void AddLines(IEnumerable<StockReceiptLine> lines)
+    {
+        dbContext.Set<StockReceiptLine>().AddRange(lines);
+    }
+
+    public void Remove(StockReceipt receipt)
+    {
+        dbContext.StockReceipts.Remove(receipt);
+    }
 }
+

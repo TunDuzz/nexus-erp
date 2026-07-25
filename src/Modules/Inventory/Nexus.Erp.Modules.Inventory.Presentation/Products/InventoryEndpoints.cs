@@ -1,18 +1,23 @@
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Nexus.Erp.Modules.Inventory.Application.Products.AdjustProductStock;
 using Nexus.Erp.Modules.Inventory.Application.Products.CreateProduct;
+using Nexus.Erp.Modules.Inventory.Application.Products.DeleteProduct;
 using Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
 using Nexus.Erp.Modules.Inventory.Application.Products.GetProducts;
 using Nexus.Erp.Modules.Inventory.Application.Products.UpdateProduct;
 using Nexus.Erp.Modules.Inventory.Application.StockIssues.CreateStockIssue;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.DeleteStockIssue;
 using Nexus.Erp.Modules.Inventory.Application.StockIssues.GetStockIssueById;
 using Nexus.Erp.Modules.Inventory.Application.StockIssues.GetStockIssues;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.UpdateStockIssue;
 using Nexus.Erp.Modules.Inventory.Application.StockReceipts.CreateStockReceipt;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.DeleteStockReceipt;
 using Nexus.Erp.Modules.Inventory.Application.StockReceipts.GetStockReceiptById;
 using Nexus.Erp.Modules.Inventory.Application.StockReceipts.GetStockReceipts;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.UpdateStockReceipt;
 using Nexus.Erp.SharedKernel.Errors;
 
 namespace Nexus.Erp.Modules.Inventory.Presentation.Products;
@@ -40,6 +45,10 @@ public static class InventoryEndpoints
             .RequireAuthorization("CanWriteInventory")
             .WithName("Inventory.UpdateProduct");
 
+        group.MapDelete("/products/{sku}", DeleteProductAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.DeleteProduct");
+
         group.MapPost("/products/{sku}/stock-adjustments", AdjustProductStockAsync)
             .RequireAuthorization("CanWriteInventory")
             .WithName("Inventory.AdjustProductStock");
@@ -56,6 +65,14 @@ public static class InventoryEndpoints
             .RequireAuthorization("CanWriteInventory")
             .WithName("Inventory.CreateStockReceipt");
 
+        group.MapPut("/stock-receipts/{receiptId:guid}", UpdateStockReceiptAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.UpdateStockReceipt");
+
+        group.MapDelete("/stock-receipts/{receiptId:guid}", DeleteStockReceiptAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.DeleteStockReceipt");
+
         group.MapGet("/stock-issues", GetStockIssuesAsync)
             .RequireAuthorization("CanReadInventory")
             .WithName("Inventory.GetStockIssues");
@@ -67,6 +84,14 @@ public static class InventoryEndpoints
         group.MapPost("/stock-issues", CreateStockIssueAsync)
             .RequireAuthorization("CanWriteInventory")
             .WithName("Inventory.CreateStockIssue");
+
+        group.MapPut("/stock-issues/{issueId:guid}", UpdateStockIssueAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.UpdateStockIssue");
+
+        group.MapDelete("/stock-issues/{issueId:guid}", DeleteStockIssueAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.DeleteStockIssue");
 
         return app;
     }
@@ -106,7 +131,9 @@ public static class InventoryEndpoints
                 request.UnitOfMeasure,
                 request.UnitPrice,
                 request.InitialQuantity,
-                request.ReorderLevel),
+                request.ReorderLevel,
+                request.ManufacturingDate,
+                request.ExpirationDate),
             cancellationToken);
 
         return result.IsSuccess
@@ -121,8 +148,18 @@ public static class InventoryEndpoints
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new UpdateProductCommand(sku, request.Name, request.UnitOfMeasure, request.UnitPrice, request.ReorderLevel),
+            new UpdateProductCommand(sku, request.Name, request.UnitOfMeasure, request.UnitPrice, request.ReorderLevel, request.ManufacturingDate, request.ExpirationDate),
             cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> DeleteProductAsync(
+        string sku,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new DeleteProductCommand(sku), cancellationToken);
 
         return ToInventoryResult(result);
     }
@@ -180,6 +217,37 @@ public static class InventoryEndpoints
             : ToInventoryResult(result);
     }
 
+    private static async Task<IResult> DeleteStockReceiptAsync(
+        Guid receiptId,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new DeleteStockReceiptCommand(receiptId), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> UpdateStockReceiptAsync(
+        Guid receiptId,
+        UpdateStockReceiptRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateStockReceiptCommand(
+                receiptId,
+                request.ReceiptNumber,
+                request.SupplierName,
+                request.ReceivedAtUtc,
+                request.Note,
+                request.Lines
+                    .Select(line => new UpdateStockReceiptLine(line.Sku, line.Quantity, line.UnitCost))
+                    .ToArray()),
+            cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
     private static async Task<IResult> GetStockIssuesAsync(
         ISender sender,
         CancellationToken cancellationToken)
@@ -220,6 +288,49 @@ public static class InventoryEndpoints
             : ToInventoryResult(result);
     }
 
+    private static async Task<IResult> DeleteStockIssueAsync(
+        Guid issueId,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new DeleteStockIssueCommand(issueId), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> UpdateStockIssueAsync(
+        Guid issueId,
+        UpdateStockIssueRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateStockIssueCommand(
+                issueId,
+                request.IssueNumber,
+                request.RequestedBy,
+                request.IssuedAtUtc,
+                request.Note,
+                request.Lines
+                    .Select(line => new UpdateStockIssueLine(line.Sku, line.Quantity, line.Reason))
+                    .ToArray()),
+            cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static IResult ToInventoryResult(Result result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.NoContent();
+        }
+
+        return result.Error.Code is "Inventory.ProductNotFound" or "Inventory.StockReceiptNotFound" or "Inventory.StockIssueNotFound"
+            ? Results.NotFound(new { result.Error.Code, result.Error.Description })
+            : Results.BadRequest(new { result.Error.Code, result.Error.Description });
+    }
+
     private static IResult ToInventoryResult<TValue>(Result<TValue> result)
     {
         if (result.IsSuccess)
@@ -238,13 +349,17 @@ public static class InventoryEndpoints
         string UnitOfMeasure,
         decimal UnitPrice,
         int InitialQuantity,
-        int ReorderLevel);
+        int ReorderLevel,
+        DateOnly? ManufacturingDate,
+        DateOnly? ExpirationDate);
 
     private sealed record UpdateProductRequest(
         string Name,
         string UnitOfMeasure,
         decimal UnitPrice,
-        int ReorderLevel);
+        int ReorderLevel,
+        DateOnly? ManufacturingDate,
+        DateOnly? ExpirationDate);
 
     private sealed record AdjustProductStockRequest(
         int QuantityChange,
@@ -262,6 +377,18 @@ public static class InventoryEndpoints
         int Quantity,
         decimal UnitCost);
 
+    private sealed record UpdateStockReceiptRequest(
+        string ReceiptNumber,
+        string SupplierName,
+        DateTimeOffset? ReceivedAtUtc,
+        string? Note,
+        IReadOnlyCollection<UpdateStockReceiptLineRequest> Lines);
+
+    private sealed record UpdateStockReceiptLineRequest(
+        string Sku,
+        int Quantity,
+        decimal UnitCost);
+
     private sealed record CreateStockIssueRequest(
         string IssueNumber,
         string RequestedBy,
@@ -273,4 +400,19 @@ public static class InventoryEndpoints
         string Sku,
         int Quantity,
         string? Reason);
+
+    private sealed record UpdateStockIssueRequest(
+        string IssueNumber,
+        string RequestedBy,
+        DateTimeOffset? IssuedAtUtc,
+        string? Note,
+        IReadOnlyCollection<UpdateStockIssueLineRequest> Lines);
+
+    private sealed record UpdateStockIssueLineRequest(
+        string Sku,
+        int Quantity,
+        string? Reason);
 }
+
+
+

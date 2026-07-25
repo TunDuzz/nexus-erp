@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nexus.Erp.Infrastructure.Shared.Persistence;
 using Nexus.Erp.Modules.Inventory.Domain.Products;
 using Nexus.Erp.Modules.Inventory.Domain.StockIssues;
@@ -26,6 +26,8 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             builder.Property(product => product.UnitPrice).HasColumnType("decimal(18,2)");
             builder.Property(product => product.QuantityOnHand).IsRequired();
             builder.Property(product => product.ReorderLevel).IsRequired();
+            builder.Property(product => product.ManufacturingDate).HasColumnType("date");
+            builder.Property(product => product.ExpirationDate).HasColumnType("date");
             builder.HasIndex(product => product.Sku).IsUnique();
         });
 
@@ -80,3 +82,4 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
         });
     }
 }
+

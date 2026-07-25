@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using Nexus.Erp.Modules.Inventory.Application.Abstractions.Data;
 using Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
 using Nexus.Erp.Modules.Inventory.Domain.Products;
@@ -25,7 +25,9 @@ internal sealed class CreateProductCommandHandler(IProductRepository products)
             request.UnitOfMeasure,
             request.UnitPrice,
             request.InitialQuantity,
-            request.ReorderLevel);
+            request.ReorderLevel,
+            request.ManufacturingDate,
+            request.ExpirationDate);
 
         await products.AddAsync(product, cancellationToken);
         await products.SaveChangesAsync(cancellationToken);
@@ -33,3 +35,4 @@ internal sealed class CreateProductCommandHandler(IProductRepository products)
         return Result<ProductResponse>.Success(ProductMapper.ToResponse(product));
     }
 }
+

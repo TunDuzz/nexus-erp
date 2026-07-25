@@ -1,5 +1,6 @@
-using MediatR;
+﻿using MediatR;
 using Nexus.Erp.Modules.Inventory.Application.Abstractions.Data;
+using Nexus.Erp.Modules.Inventory.Application.Products;
 using Nexus.Erp.SharedKernel.Errors;
 
 namespace Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
@@ -18,15 +19,8 @@ internal sealed class GetProductBySkuQueryHandler(IProductReadRepository product
             return Result<ProductResponse>.Failure(new Error("Inventory.ProductNotFound", "Product was not found."));
         }
 
-        return Result<ProductResponse>.Success(
-            new ProductResponse(
-                product.Id,
-                product.Sku,
-                product.Name,
-                product.UnitOfMeasure,
-                product.UnitPrice,
-                product.QuantityOnHand,
-                product.ReorderLevel,
-                product.IsBelowReorderLevel));
+        return Result<ProductResponse>.Success(ProductMapper.ToResponse(product));
     }
 }
+
+
