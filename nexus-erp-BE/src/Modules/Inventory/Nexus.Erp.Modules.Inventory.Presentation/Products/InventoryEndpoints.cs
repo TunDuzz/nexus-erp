@@ -1,0 +1,418 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Nexus.Erp.Modules.Inventory.Application.Products.AdjustProductStock;
+using Nexus.Erp.Modules.Inventory.Application.Products.CreateProduct;
+using Nexus.Erp.Modules.Inventory.Application.Products.DeleteProduct;
+using Nexus.Erp.Modules.Inventory.Application.Products.GetProductBySku;
+using Nexus.Erp.Modules.Inventory.Application.Products.GetProducts;
+using Nexus.Erp.Modules.Inventory.Application.Products.UpdateProduct;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.CreateStockIssue;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.DeleteStockIssue;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.GetStockIssueById;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.GetStockIssues;
+using Nexus.Erp.Modules.Inventory.Application.StockIssues.UpdateStockIssue;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.CreateStockReceipt;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.DeleteStockReceipt;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.GetStockReceiptById;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.GetStockReceipts;
+using Nexus.Erp.Modules.Inventory.Application.StockReceipts.UpdateStockReceipt;
+using Nexus.Erp.SharedKernel.Errors;
+
+namespace Nexus.Erp.Modules.Inventory.Presentation.Products;
+
+public static class InventoryEndpoints
+{
+    public static IEndpointRouteBuilder MapInventoryEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/inventory")
+            .WithTags("Inventory");
+
+        group.MapGet("/products", GetProductsAsync)
+            .RequireAuthorization("CanReadInventory")
+            .WithName("Inventory.GetProducts");
+
+        group.MapGet("/products/{sku}", GetProductBySkuAsync)
+            .RequireAuthorization("CanReadInventory")
+            .WithName("Inventory.GetProductBySku");
+
+        group.MapPost("/products", CreateProductAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.CreateProduct");
+
+        group.MapPut("/products/{sku}", UpdateProductAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.UpdateProduct");
+
+        group.MapDelete("/products/{sku}", DeleteProductAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.DeleteProduct");
+
+        group.MapPost("/products/{sku}/stock-adjustments", AdjustProductStockAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.AdjustProductStock");
+
+        group.MapGet("/stock-receipts", GetStockReceiptsAsync)
+            .RequireAuthorization("CanReadInventory")
+            .WithName("Inventory.GetStockReceipts");
+
+        group.MapGet("/stock-receipts/{receiptId:guid}", GetStockReceiptByIdAsync)
+            .RequireAuthorization("CanReadInventory")
+            .WithName("Inventory.GetStockReceiptById");
+
+        group.MapPost("/stock-receipts", CreateStockReceiptAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.CreateStockReceipt");
+
+        group.MapPut("/stock-receipts/{receiptId:guid}", UpdateStockReceiptAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.UpdateStockReceipt");
+
+        group.MapDelete("/stock-receipts/{receiptId:guid}", DeleteStockReceiptAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.DeleteStockReceipt");
+
+        group.MapGet("/stock-issues", GetStockIssuesAsync)
+            .RequireAuthorization("CanReadInventory")
+            .WithName("Inventory.GetStockIssues");
+
+        group.MapGet("/stock-issues/{issueId:guid}", GetStockIssueByIdAsync)
+            .RequireAuthorization("CanReadInventory")
+            .WithName("Inventory.GetStockIssueById");
+
+        group.MapPost("/stock-issues", CreateStockIssueAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.CreateStockIssue");
+
+        group.MapPut("/stock-issues/{issueId:guid}", UpdateStockIssueAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.UpdateStockIssue");
+
+        group.MapDelete("/stock-issues/{issueId:guid}", DeleteStockIssueAsync)
+            .RequireAuthorization("CanWriteInventory")
+            .WithName("Inventory.DeleteStockIssue");
+
+        return app;
+    }
+
+    private static async Task<IResult> GetProductsAsync(
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetProductsQuery(), cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : Results.BadRequest(new { result.Error.Code, result.Error.Description });
+    }
+
+    private static async Task<IResult> GetProductBySkuAsync(
+        string sku,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetProductBySkuQuery(sku), cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : Results.NotFound(new { result.Error.Code, result.Error.Description });
+    }
+
+    private static async Task<IResult> CreateProductAsync(
+        CreateProductRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new CreateProductCommand(
+                request.Sku,
+                request.Name,
+                request.UnitOfMeasure,
+                request.UnitPrice,
+                request.InitialQuantity,
+                request.ReorderLevel,
+                request.ManufacturingDate,
+                request.ExpirationDate),
+            cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Created($"/api/inventory/products/{result.Value.Sku}", result.Value)
+            : Results.BadRequest(new { result.Error.Code, result.Error.Description });
+    }
+
+    private static async Task<IResult> UpdateProductAsync(
+        string sku,
+        UpdateProductRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateProductCommand(sku, request.Name, request.UnitOfMeasure, request.UnitPrice, request.ReorderLevel, request.ManufacturingDate, request.ExpirationDate),
+            cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> DeleteProductAsync(
+        string sku,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new DeleteProductCommand(sku), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> AdjustProductStockAsync(
+        string sku,
+        AdjustProductStockRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new AdjustProductStockCommand(sku, request.QuantityChange, request.Reason),
+            cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> GetStockReceiptsAsync(
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetStockReceiptsQuery(), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> GetStockReceiptByIdAsync(
+        Guid receiptId,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetStockReceiptByIdQuery(receiptId), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> CreateStockReceiptAsync(
+        CreateStockReceiptRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new CreateStockReceiptCommand(
+                request.ReceiptNumber,
+                request.SupplierName,
+                request.ReceivedAtUtc,
+                request.Note,
+                request.Lines
+                    .Select(line => new CreateStockReceiptLine(line.Sku, line.Quantity, line.UnitCost))
+                    .ToArray()),
+            cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Created($"/api/inventory/stock-receipts/{result.Value.Id}", result.Value)
+            : ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> DeleteStockReceiptAsync(
+        Guid receiptId,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new DeleteStockReceiptCommand(receiptId), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> UpdateStockReceiptAsync(
+        Guid receiptId,
+        UpdateStockReceiptRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateStockReceiptCommand(
+                receiptId,
+                request.ReceiptNumber,
+                request.SupplierName,
+                request.ReceivedAtUtc,
+                request.Note,
+                request.Lines
+                    .Select(line => new UpdateStockReceiptLine(line.Sku, line.Quantity, line.UnitCost))
+                    .ToArray()),
+            cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> GetStockIssuesAsync(
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetStockIssuesQuery(), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> GetStockIssueByIdAsync(
+        Guid issueId,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetStockIssueByIdQuery(issueId), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> CreateStockIssueAsync(
+        CreateStockIssueRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new CreateStockIssueCommand(
+                request.IssueNumber,
+                request.RequestedBy,
+                request.IssuedAtUtc,
+                request.Note,
+                request.Lines
+                    .Select(line => new CreateStockIssueLine(line.Sku, line.Quantity, line.Reason))
+                    .ToArray()),
+            cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Created($"/api/inventory/stock-issues/{result.Value.Id}", result.Value)
+            : ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> DeleteStockIssueAsync(
+        Guid issueId,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new DeleteStockIssueCommand(issueId), cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static async Task<IResult> UpdateStockIssueAsync(
+        Guid issueId,
+        UpdateStockIssueRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateStockIssueCommand(
+                issueId,
+                request.IssueNumber,
+                request.RequestedBy,
+                request.IssuedAtUtc,
+                request.Note,
+                request.Lines
+                    .Select(line => new UpdateStockIssueLine(line.Sku, line.Quantity, line.Reason))
+                    .ToArray()),
+            cancellationToken);
+
+        return ToInventoryResult(result);
+    }
+
+    private static IResult ToInventoryResult(Result result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.NoContent();
+        }
+
+        return result.Error.Code is "Inventory.ProductNotFound" or "Inventory.StockReceiptNotFound" or "Inventory.StockIssueNotFound"
+            ? Results.NotFound(new { result.Error.Code, result.Error.Description })
+            : Results.BadRequest(new { result.Error.Code, result.Error.Description });
+    }
+
+    private static IResult ToInventoryResult<TValue>(Result<TValue> result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.Ok(result.Value);
+        }
+
+        return result.Error.Code is "Inventory.ProductNotFound" or "Inventory.StockReceiptNotFound" or "Inventory.StockIssueNotFound"
+            ? Results.NotFound(new { result.Error.Code, result.Error.Description })
+            : Results.BadRequest(new { result.Error.Code, result.Error.Description });
+    }
+
+    private sealed record CreateProductRequest(
+        string Sku,
+        string Name,
+        string UnitOfMeasure,
+        decimal UnitPrice,
+        int InitialQuantity,
+        int ReorderLevel,
+        DateOnly? ManufacturingDate,
+        DateOnly? ExpirationDate);
+
+    private sealed record UpdateProductRequest(
+        string Name,
+        string UnitOfMeasure,
+        decimal UnitPrice,
+        int ReorderLevel,
+        DateOnly? ManufacturingDate,
+        DateOnly? ExpirationDate);
+
+    private sealed record AdjustProductStockRequest(
+        int QuantityChange,
+        string? Reason);
+
+    private sealed record CreateStockReceiptRequest(
+        string ReceiptNumber,
+        string SupplierName,
+        DateTimeOffset? ReceivedAtUtc,
+        string? Note,
+        IReadOnlyCollection<CreateStockReceiptLineRequest> Lines);
+
+    private sealed record CreateStockReceiptLineRequest(
+        string Sku,
+        int Quantity,
+        decimal UnitCost);
+
+    private sealed record UpdateStockReceiptRequest(
+        string ReceiptNumber,
+        string SupplierName,
+        DateTimeOffset? ReceivedAtUtc,
+        string? Note,
+        IReadOnlyCollection<UpdateStockReceiptLineRequest> Lines);
+
+    private sealed record UpdateStockReceiptLineRequest(
+        string Sku,
+        int Quantity,
+        decimal UnitCost);
+
+    private sealed record CreateStockIssueRequest(
+        string IssueNumber,
+        string RequestedBy,
+        DateTimeOffset? IssuedAtUtc,
+        string? Note,
+        IReadOnlyCollection<CreateStockIssueLineRequest> Lines);
+
+    private sealed record CreateStockIssueLineRequest(
+        string Sku,
+        int Quantity,
+        string? Reason);
+
+    private sealed record UpdateStockIssueRequest(
+        string IssueNumber,
+        string RequestedBy,
+        DateTimeOffset? IssuedAtUtc,
+        string? Note,
+        IReadOnlyCollection<UpdateStockIssueLineRequest> Lines);
+
+    private sealed record UpdateStockIssueLineRequest(
+        string Sku,
+        int Quantity,
+        string? Reason);
+}
+
+
+

@@ -1,0 +1,73 @@
+# ==========================================
+# Root .gitignore for Nexus ERP Monorepo
+# ==========================================
+
+# ------------------------------------------
+# Backend (.NET / C#)
+# ------------------------------------------
+**/bin/
+**/obj/
+**/TestResults/
+**/artifacts/
+**/publish/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Backend Secrets & Local Configs
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Staging.json
+**/appsettings.Local.json
+!**/appsettings.Development.example.json
+
+# ------------------------------------------
+# Frontend (Node.js / React / Vite / TS)
+# ------------------------------------------
+**/node_modules/
+**/dist/
+**/build/
+**/out/
+*.tsbuildinfo
+.npm/
+.yarn/
+.pnpm-debug.log*
+
+# Frontend Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# ------------------------------------------
+# Agent / Internal Tools
+# ------------------------------------------
+.agents/
+
+# ------------------------------------------
+# IDEs & Editors
+# ------------------------------------------
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# ------------------------------------------
+# Logs & Environment
+# ------------------------------------------
+*.log
+logs/
+docker-compose.override.yml
+
+# ------------------------------------------
+# OS & System
+# ------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.28">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.28" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Nexus.Erp.Application.Abstractions\Nexus.Erp.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\Shared\Nexus.Erp.Infrastructure.Shared\Nexus.Erp.Infrastructure.Shared.csproj" />
+    <ProjectReference Include="..\Modules\HR\Nexus.Erp.Modules.HR.Infrastructure\Nexus.Erp.Modules.HR.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\HR\Nexus.Erp.Modules.HR.Presentation\Nexus.Erp.Modules.HR.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\Nexus.Erp.Modules.Inventory.Infrastructure\Nexus.Erp.Modules.Inventory.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\Nexus.Erp.Modules.Inventory.Presentation\Nexus.Erp.Modules.Inventory.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Nexus.Erp.Modules.Identity.Infrastructure\Nexus.Erp.Modules.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Nexus.Erp.Modules.Identity.Presentation\Nexus.Erp.Modules.Identity.Presentation.csproj" />
+  </ItemGroup>
+
+</Project>
