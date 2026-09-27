@@ -1,4 +1,4 @@
-﻿import { Moon, ShieldCheck, Sun, UserPlus, Warehouse } from "lucide-react";
+import { Eye, EyeOff, Moon, ShieldCheck, Sun, UserPlus, Warehouse } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { AuthMode, AuthPayload, Theme } from "../types";
 
@@ -16,6 +16,7 @@ export function AuthScreen({
   theme: Theme;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,11 +87,11 @@ export function AuthScreen({
             <div className="form-grid two-columns">
               <label>
                 Họ
-                <input disabled={isSubmitting} name="firstName" placeholder="Trần" required />
+                <input disabled={isSubmitting} name="firstName" placeholder="Nguyễn Văn" required />
               </label>
               <label>
                 Tên
-                <input disabled={isSubmitting} name="lastName" placeholder="Anh" required />
+                <input disabled={isSubmitting} name="lastName" placeholder="A" required />
               </label>
             </div>
           )}
@@ -108,15 +109,27 @@ export function AuthScreen({
           </label>
           <label>
             Mật khẩu
-            <input
-              autoComplete={authMode === "login" ? "current-password" : "new-password"}
-              disabled={isSubmitting}
-              minLength={6}
-              name="password"
-              placeholder="Nhập mật khẩu"
-              required
-              type="password"
-            />
+            <div className="password-input-container">
+              <input
+                autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                disabled={isSubmitting}
+                minLength={6}
+                name="password"
+                placeholder="Nhập mật khẩu"
+                required
+                type={showPassword ? "text" : "password"}
+              />
+              <button
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                className="password-toggle-btn"
+                disabled={isSubmitting}
+                onClick={() => setShowPassword((prev) => !prev)}
+                title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                type="button"
+              >
+                {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+              </button>
+            </div>
           </label>
 
           <button className={`primary-action ${isSubmitting ? "loading" : ""}`} disabled={isSubmitting} type="submit">

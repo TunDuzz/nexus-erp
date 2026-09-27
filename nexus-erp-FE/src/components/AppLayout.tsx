@@ -155,14 +155,22 @@ export function AppLayout({
               {showNotifications && (
                 <div className="notification-panel">
                   <header className="notification-header">
-                    <strong>Thông báo ({unreadCount})</strong>
-                    <div className="button-row">
+                    <div className="notification-header-title">
+                      <strong>Thông báo</strong>
+                      {unreadCount > 0 && <span className="unread-badge">{unreadCount} mới</span>}
+                    </div>
+                    <div className="button-row" style={{ alignItems: "center" }}>
                       {unreadCount > 0 && onMarkAllAsRead && (
                         <button className="secondary-action compact" onClick={onMarkAllAsRead} type="button">
                           Đọc tất cả
                         </button>
                       )}
-                      <button className="icon-button" onClick={() => setShowNotifications(false)} type="button">
+                      <button
+                        className="notification-delete-btn"
+                        onClick={() => setShowNotifications(false)}
+                        title="Đóng thông báo"
+                        type="button"
+                      >
                         <X size={16} />
                       </button>
                     </div>
@@ -170,23 +178,26 @@ export function AppLayout({
 
                   <div className="notification-list">
                     {notifications.length === 0 ? (
-                      <div className="empty-state">Không có thông báo nào.</div>
+                      <div className="empty-state notification-empty">
+                        <Bell size={28} />
+                        <span>Không có thông báo nào.</span>
+                      </div>
                     ) : (
                       notifications.map((notification) => (
                         <article className={notification.read ? "notification-item" : "notification-item unread"} key={notification.id}>
-                          <div>
-                            <strong>{notification.title}</strong>
-                            <p>{notification.message}</p>
-                            <span>{new Date(notification.createdAt).toLocaleString("vi-VN")}</span>
+                          <div className="notification-content">
+                            <strong className="notification-title">{notification.title}</strong>
+                            <p className="notification-msg">{notification.message}</p>
+                            <span className="notification-time">{new Date(notification.createdAt).toLocaleString("vi-VN")}</span>
                           </div>
                           {onDeleteNotification && (
                             <button
-                              className="icon-button"
+                              className="notification-delete-btn"
                               onClick={() => onDeleteNotification(notification.id)}
                               title="Xóa thông báo"
                               type="button"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={15} />
                             </button>
                           )}
                         </article>
@@ -196,7 +207,7 @@ export function AppLayout({
 
                   {notifications.length > 0 && onClearAllNotifications && (
                     <footer className="notification-footer">
-                      <button className="danger-action compact" onClick={onClearAllNotifications} type="button">
+                      <button className="danger-action compact full-width" onClick={onClearAllNotifications} type="button">
                         Xóa tất cả thông báo
                       </button>
                     </footer>
