@@ -1,7 +1,39 @@
-﻿export type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 export type AuthMode = "login" | "register";
-export type View = "overview" | "products" | "receipts" | "issues" | "disposals" | "reports" | "roles";
+export type View = "overview" | "products" | "receipts" | "issues" | "disposals" | "reports" | "roles" | "print-templates";
 export type MovementType = "receipt" | "issue";
+
+export type PrintTemplateType = "GOODS_RECEIPT" | "GOODS_ISSUE";
+
+export type PrintTemplateColumnConfig = {
+  stt: boolean;
+  sku: boolean;
+  name: boolean;
+  unit: boolean;
+  quantity: boolean;
+  unitPrice: boolean;
+  totalPrice: boolean;
+  note: boolean;
+};
+
+export type PrintTemplate = {
+  id: string;
+  name: string;
+  type: PrintTemplateType;
+  isDefault: boolean;
+  pageSize: "A4" | "A5";
+  orientation: "portrait" | "landscape";
+  showLogo: boolean;
+  logoUrl?: string;
+  title: string;
+  companyName: string;
+  address: string;
+  phone: string;
+  email?: string;
+  columns: PrintTemplateColumnConfig;
+  signatures: string[];
+  footerNotes: string;
+};
 
 export type Product = {
   id: string;

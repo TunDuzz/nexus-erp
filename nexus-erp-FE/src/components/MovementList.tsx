@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, Plus, Trash2, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Plus, Printer, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Movement, Product, StockMovementDraft } from "../types";
 import { dateFormatter, formatCurrency } from "../utils/formatters";
@@ -21,11 +21,13 @@ export function MovementList({
   products,
   onUpdateMovement,
   onDeleteMovement,
+  onPrintMovement,
 }: {
   movements: Movement[];
   products?: Product[];
   onUpdateMovement?: (movement: StockMovementDraft) => void | Promise<void>;
   onDeleteMovement?: (movement: Movement) => void | Promise<void>;
+  onPrintMovement?: (movement: Movement) => void;
 }) {
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -248,9 +250,25 @@ export function MovementList({
                 <strong>{first.number}</strong>
                 <span>{first.contact} · {skuList}</span>
               </div>
-              <div className="movement-value">
-                <strong>{formatCurrency(totalValue)}</strong>
-                <span>{dateFormatter.format(new Date(first.createdAt))}</span>
+              <div className="movement-value" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ textAlign: "right" }}>
+                  <strong>{formatCurrency(totalValue)}</strong>
+                  <span>{dateFormatter.format(new Date(first.createdAt))}</span>
+                </div>
+                {onPrintMovement && (
+                  <button
+                    className="icon-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPrintMovement(first);
+                    }}
+                    title="In chứng từ phiếu này"
+                    type="button"
+                    style={{ minHeight: "36px", width: "36px" }}
+                  >
+                    <Printer size={16} />
+                  </button>
+                )}
               </div>
             </article>
           );
@@ -452,6 +470,16 @@ export function MovementList({
                   {onDeleteMovement && (
                     <button className="danger-action" onClick={handleDelete} type="button" style={{ minHeight: "38px", marginRight: "auto" }}>
                       Xóa phiếu
+                    </button>
+                  )}
+                  {onPrintMovement && (
+                    <button
+                      className="secondary-action"
+                      onClick={() => onPrintMovement(selectedMovement)}
+                      type="button"
+                      style={{ minHeight: "38px" }}
+                    >
+                      <Printer size={16} /> In phiếu
                     </button>
                   )}
                   <button className="secondary-action" onClick={() => setSelectedMovement(null)} type="button" style={{ minHeight: "38px" }}>
