@@ -11,7 +11,10 @@ import { ProductsPanel } from "./features/products/ProductsPanel";
 import { ReportsPanel } from "./features/reports/ReportsPanel";
 import { RoleManagementPanel } from "./features/roles/RoleManagementPanel";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
-import { AuthPayload, Movement, Product, RoleDefinition, Theme, UserRole, UserSession, View, AppNotification, StockMovementDraft } from "./types";
+import { AuthPayload, Movement, Product, RoleDefinition, Theme, UserRole, UserSession, View, AppNotification, StockMovementDraft, PrintTemplate, PrintTemplateType } from "./types";
+import { PrintTemplatePanel } from "./features/print-templates/PrintTemplatePanel";
+import { PrintVoucherModal } from "./features/print-templates/PrintVoucherModal";
+import { initialPrintTemplates } from "./constants/printTemplates";
 import { formatCurrency } from "./utils/formatters";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5062";
@@ -99,11 +102,49 @@ function App() {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [activeView, setActiveView] = useLocalStorageState<View>("nexus-active-view", "overview");
+  const [printTemplates, setPrintTemplates] = useLocalStorageState<PrintTemplate[]>(
+    "nexus-print-templates",
+    initialPrintTemplates
+  );
+  const [printingMovement, setPrintingMovement] = useState<Movement | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [roleDefinitions, setRoleDefinitions] = useState<RoleDefinition[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const isLoggingOutRef = useRef(false);
+
+  const handleSavePrintTemplate = (template: PrintTemplate) => {
+    setPrintTemplates((prev) => {
+      const currentList = prev || initialPrintTemplates;
+      const existingIndex = currentList.findIndex((t) => t.id === template.id);
+      let updated: PrintTemplate[];
+      if (existingIndex >= 0) {
+        updated = [...currentList];
+        updated[existingIndex] = template;
+      } else {
+        updated = [...currentList, template];
+      }
+      if (template.isDefault) {
+        updated = updated.map((t) =>
+          t.type === template.type ? { ...t, isDefault: t.id === template.id } : t
+        );
+      }
+      return updated;
+    });
+    addToast("Lưu mẫu in thành công!", "success");
+  };
+
+  const handleDeletePrintTemplate = (id: string) => {
+    setPrintTemplates((prev) => (prev || initialPrintTemplates).filter((t) => t.id !== id));
+    addToast("Đã xóa mẫu in.", "info");
+  };
+
+  const handleSetDefaultPrintTemplate = (id: string, type: PrintTemplateType) => {
+    setPrintTemplates((prev) =>
+      (prev || initialPrintTemplates).map((t) => (t.type === type ? { ...t, isDefault: t.id === id } : t))
+    );
+    addToast("Đã đặt mẫu in mặc định mới.", "success");
+  };
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -173,8 +214,13 @@ function App() {
   }, [products]);
 
   const addToast = (message: string, type: ToastType = "success") => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => {
+      if (prev.some((t) => t.message === message && t.type === type)) {
+        return prev;
+      }
+      const id = Math.random().toString(36).substring(2, 9);
+      return [...prev, { id, message, type }];
+    });
   };
 
   const removeToast = (id: string) => {
@@ -217,6 +263,7 @@ function App() {
     setRoleDefinitions([]);
     setUserRoles([]);
     setActiveView("overview");
+    setToasts([]);
   };
 
   const handleUnauthorized = (message?: string) => {
@@ -389,10 +436,12 @@ function App() {
     if (!user?.accessToken) return;
 
     loadInventory(user.accessToken).catch((error) => {
+      if (error instanceof Error && (error.message === "Token expired" || error.message.includes("Phiên đăng nhập"))) return;
       addToast(error instanceof Error ? error.message : "Không thể tải dữ liệu tồn kho", "error");
     });
 
     loadRoleManagement(user.accessToken, user.permissions).catch((error) => {
+      if (error instanceof Error && (error.message === "Token expired" || error.message.includes("Phiên đăng nhập"))) return;
       addToast(error instanceof Error ? error.message : "Không thể tải dữ liệu phân quyền", "error");
     });
   }, [user?.accessToken]);
@@ -432,6 +481,7 @@ function App() {
     }
 
     const session = (await response.json()) as AuthResponse;
+    setToasts([]);
     setUser(session);
     await loadInventory(session.accessToken);
     if (session.permissions.includes("identity.roles.manage")) {
@@ -672,7 +722,7 @@ function App() {
             <MetricCard label="Nhân viên kho" value={userRoles.filter((u) => u.roles.includes("InventoryStaff")).length.toString()} tone="red" icon={Warehouse} />
             <MetricCard label="Nhóm vai trò" value={roleDefinitions.length.toString()} tone="neutral" icon={Key} />
           </section>
-        ) : (
+        ) : activeView === "print-templates" ? null : (
           <section className="status-strip" aria-label="Chỉ số kho">
             <MetricCard label="Tổng SKU" value={products.length.toString()} tone="green" />
             <MetricCard label="Giá trị tồn" value={formatCurrency(inventoryValue)} tone="amber" />
@@ -715,6 +765,7 @@ function App() {
             onUpdateMovement={updateMovement}
             creatorName={user.fullName}
             onDeleteMovement={deleteMovement}
+            onPrintMovement={(m) => setPrintingMovement(m)}
           />
         )}
 
@@ -729,6 +780,7 @@ function App() {
             onUpdateMovement={updateMovement}
             creatorName={user.fullName}
             onDeleteMovement={deleteMovement}
+            onPrintMovement={(m) => setPrintingMovement(m)}
           />
         )}
 
@@ -745,6 +797,15 @@ function App() {
           <ReportsPanel movements={movements} products={products} onUpdateMovement={updateMovement} onDeleteMovement={deleteMovement} />
         )}
 
+        {activeView === "print-templates" && (
+          <PrintTemplatePanel
+            templates={printTemplates}
+            onSaveTemplate={handleSavePrintTemplate}
+            onDeleteTemplate={handleDeletePrintTemplate}
+            onSetDefaultTemplate={handleSetDefaultPrintTemplate}
+          />
+        )}
+
         {activeView === "roles" && user.permissions.includes("identity.roles.manage") && (
           <RoleManagementPanel
             roles={roleDefinitions}
@@ -755,6 +816,17 @@ function App() {
           />
         )}
       </AppLayout>
+
+      {printingMovement && (
+        <PrintVoucherModal
+          movement={printingMovement}
+          movements={movements}
+          products={products}
+          availableTemplates={printTemplates}
+          onClose={() => setPrintingMovement(null)}
+        />
+      )}
+
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </>
   );

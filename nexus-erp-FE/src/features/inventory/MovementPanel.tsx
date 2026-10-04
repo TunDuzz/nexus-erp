@@ -26,6 +26,7 @@ export function MovementPanel({
   onUpdateMovement,
   creatorName,
   onDeleteMovement,
+  onPrintMovement,
 }: {
   onSubmit: (movement: StockMovementDraft) => void | Promise<void>;
   products: Product[];
@@ -36,6 +37,7 @@ export function MovementPanel({
   onUpdateMovement?: (movement: StockMovementDraft) => void | Promise<void>;
   creatorName: string;
   onDeleteMovement?: (movement: Movement) => void | Promise<void>;
+  onPrintMovement?: (movement: Movement) => void;
 }) {
   const isReceipt = type === "receipt";
   const firstSku = products[0]?.sku ?? "";
@@ -340,7 +342,13 @@ export function MovementPanel({
             onChange={(event) => setMovementQuery(event.target.value)}
           />
         </div>
-        <MovementList movements={visibleMovements} products={products} onUpdateMovement={onUpdateMovement} onDeleteMovement={onDeleteMovement} />
+        <MovementList
+          movements={visibleMovements}
+          products={products}
+          onUpdateMovement={onUpdateMovement}
+          onDeleteMovement={onDeleteMovement}
+          onPrintMovement={onPrintMovement}
+        />
       </section>
     </div>
   );

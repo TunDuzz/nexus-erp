@@ -1,9 +1,10 @@
-﻿import {
+import {
   ArrowDownToLine,
   ArrowUpFromLine,
   BarChart3,
   Boxes,
   LayoutDashboard,
+  Printer,
   ShieldCheck,
   Trash2,
 } from "lucide-react";
@@ -16,5 +17,6 @@ export const viewItems = [
   { id: "issues", label: "Xuất kho", icon: ArrowUpFromLine },
   { id: "disposals", label: "Hủy hàng", icon: Trash2 },
   { id: "reports", label: "Báo cáo", icon: BarChart3 },
+  { id: "print-templates", label: "Mẫu in", icon: Printer },
   { id: "roles", label: "Vai trò", icon: ShieldCheck, requiredPermission: "identity.roles.manage" },
 ] satisfies { id: View; label: string; icon: typeof LayoutDashboard; requiredPermission?: string }[];
